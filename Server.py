@@ -1,6 +1,10 @@
 import websockets
 import asyncio
 import sys
+
+from CustomExitException import *
+
+CLIENTS = set()
  
 # https://stackoverflow.com/questions/58454190/python-async-waiting-for-stdin-input-while-doing-other-stuff by user: user4815162342
 async def ainput(string: str) -> str:
@@ -18,27 +22,30 @@ async def receive(websocket):
 async def send(websocket):
     while True:
         toSend = await ainput("")
-        if toSend == "exit":
-            raise websockets.AbortHandshake()
+        if toSend.strip() == "exit":
+            raise CustomExitException("Connection closing")
         
         await websocket.send(toSend)
 
 # Creating WebSocket server
 async def ws_server(websocket):
     print("WebSocket: Server started and Client connected.")
+    CLIENTS.add(websocket)
     await websocket.send("Client connected")
     try:
         await asyncio.gather(
             receive(websocket),
             send(websocket)
             )
-    except websockets.AbortHandshake:
+    except CustomExitException as e:
         print("Connection closed")
+    finally:
+        CLIENTS.remove(websocket)
     
     
  
 async def main():
-    async with websockets.serve(ws_server, "localhost", 7890):
+    async with websockets.serve(ws_server, "0.0.0.0", 7890):
         await asyncio.Future()  # run forever
  
 # basically __name__ is a special method which changes relative to how the module is run, if directly then it is __main__, else it is set to be the name of the file

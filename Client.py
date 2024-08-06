@@ -2,6 +2,8 @@ import websockets
 import asyncio
 import sys
 
+import CustomExitException
+
 # https://stackoverflow.com/questions/58454190/python-async-waiting-for-stdin-input-while-doing-other-stuff by user: user4815162342
 async def ainput(string: str) -> str:
     await asyncio.get_event_loop().run_in_executor(
@@ -18,8 +20,8 @@ async def receive(ws) -> None:
 async def send(ws) -> None:
     while True:
         toSend = await ainput("")
-        if toSend == "exit":
-            raise websockets.AbortHandshake()
+        if toSend.strip() == "exit":
+            raise CustomExitException("Client disconnected")
         
         await ws.send(toSend)
 
@@ -30,7 +32,7 @@ async def ws_client():
 
     try:
         
-        url = "ws://127.0.0.1:7890"
+        url = "ws://100.73.200.83:7890"
         # Connect to the server
         async with websockets.connect(url) as ws:
             
@@ -43,9 +45,8 @@ async def ws_client():
                 send(ws)
             )
             
-    except websockets.AbortHandshake:
-        print("--------------------------------------------")
-        print("You have closed your connection to the server")
+    except CustomExitException as e:
+        print("Connection closed")
     except websockets.ConnectionClosedOK:
         print("Cannot connect to server")
  
