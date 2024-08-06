@@ -4,6 +4,7 @@ import sys
 import json 
 
 from CustomExitException import *
+from MalformedCommandException import *
  
 connections = {} # id: websocket object
 
@@ -36,43 +37,70 @@ async def broadcast(message, senderid):
             
             await connections[connection_id].send(message)
     
+async def commands(connections, rooms: set, message: str):
+    message = message[1:]
+    
+    message = message.split("/") # example command format: /command/arg1/arg2
+    
+    command = message[0]
 
-# FOR THE CONNECTION MANAGER, ON FIRST CONNECTION THE SERVER ASSIGNS AN ID, THEN THE USER MUST COMMUNICATE THIS ID EVERY TIME THEY SEND A MESSAGEs
-
-# async def send(websocket):
-#     while True:
-#         messageToSend = await ainput("")
-#         if messageToSend.strip() == "exit":
-#             raise CustomExitException()
+    # if message.find(" ") != -1:
+    #     command = message[0:message.find(" ")]
+    
+    if command == "broadcast": #/broadcast/message Inserted
         
-#         toSend_dict = {
-#             "message" : messageToSend.strip(),
-#             "id": "Server"
-#         }
-#         await websocket.send(json.dumps(toSend_dict))
-
+        if len(message) != 2: # number of arguments
+            raise MalformedCommandException()
+        
+        toSend_dict = {
+            "message" : message[1],
+            "id": "Server"
+        }
+        await broadcast(json.dumps(toSend_dict), -1) # -1 to indicate server broadcast to all
+    
+    elif command == "individual": # /individual/2/message Inserted
+        if len(message) != 3: 
+            raise MalformedCommandException()
+        
+        target = message[1]
+        
+        toSend_dict = {
+                "message" : message[2],
+                "id": "Server"
+            }
+        await connections[target.strip()].send(json.dumps(toSend_dict))
+        
+        
+    
 
 # server send means broadcast to all
 async def send():
     while True:
-        messageToSend = await ainput("")
-        if messageToSend.strip() == "exit":
+        message = await ainput("")
+        if message.strip() == "exit": # this doesn't really work
             raise CustomExitException()
         
-        if messageToSend.find("/") == -1:
-            toSend_dict = {
-                "message" : messageToSend.strip(),
-                "id": "Server"
-            }
-            await broadcast(json.dumps(toSend_dict), -1) # -1 to indicate server broadcast to all
-        else:
-            messageToSend = messageToSend.split("/")
-            toSend_dict = {
-                "message" : messageToSend[1].strip(),
-                "id": "Server"
-            }
-            await connections[messageToSend[0].strip()].send(json.dumps(toSend_dict))
-            # await broadcast(json.dumps(toSend_dict), messageToSend[0].strip()) # use a command in format "id/message" to decide who to send it to
+        # the below section should probably be reworked
+        try:
+            if message[0] == "/":
+                await commands(connections, rooms, message)
+        except MalformedCommandException as e:
+            print(f"{e.message}")
+        
+        # if message.find("/") == -1:
+        #     toSend_dict = {
+        #         "message" : message.strip(),
+        #         "id": "Server"
+        #     }
+        #     await broadcast(json.dumps(toSend_dict), -1) # -1 to indicate server broadcast to all
+        # else:
+        #     message = message.split("/")
+        #     toSend_dict = {
+        #         "message" : message[1].strip(),
+        #         "id": "Server"
+        #     }
+        #     await connections[message[0].strip()].send(json.dumps(toSend_dict))
+        #     # await broadcast(json.dumps(toSend_dict), message[0].strip()) # use a command in format "id/message" to decide who to send it to
             
             
 
@@ -86,6 +114,8 @@ async def ws_server(websocket):
     
     await websocket.send("Connected to server") # let client know its in
     await websocket.send(str(id)) # let the client know which id to transmit messages as
+    
+    # if a message has to be sent to a specific client put it in the above block before the await
     
     try:
         await asyncio.gather(
