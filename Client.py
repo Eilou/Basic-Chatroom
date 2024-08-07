@@ -17,7 +17,7 @@ async def receive(ws):
     while True:
         received_str = await ws.recv()
         received_dict = json.loads(received_str)
-        received = f"\t\t\t{received_dict["id"]}: {received_dict["message"].strip()}"
+        received = f'\t\t\t{received_dict["id"]}: {received_dict["message"].strip()}'
         print(received)
 
 async def send(ws, id):
