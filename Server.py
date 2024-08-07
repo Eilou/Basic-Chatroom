@@ -90,7 +90,7 @@ async def send():
         # if message.find("/") == -1:
         #     toSend_dict = {
         #         "message" : message.strip(),
-        #         "id": "Server"
+        #         "id": "Server"    
         #     }
         #     await broadcast(json.dumps(toSend_dict), -1) # -1 to indicate server broadcast to all
         # else:
@@ -133,7 +133,7 @@ async def ws_server(websocket):
  
 async def main():
     print("Server starting")
-    async with websockets.serve(ws_server, "localhost", 8765):
+    async with websockets.serve(ws_server, "0.0.0.0", 8765):
         await asyncio.Future()  # run forever
  
 # basically __name__ is a special method which changes relative to how the module is run, if directly then it is __main__, else it is set to be the name of the file

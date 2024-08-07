@@ -39,7 +39,8 @@ async def ws_client():
 
     try:
         
-        url = "ws://127.0.0.1:8765"
+        url = "ws://192.168.40.164:8765" # using my private ip as a temporary gig
+        
         # Connect to the server
         async with websockets.connect(url) as ws:
             
