@@ -37,9 +37,10 @@ async def receive(websocket):
 async def broadcast(message, senderid):
     for connection_id in connections:
         if connection_id != senderid:
-            
             await connections[connection_id].send(message)
     
+    
+
 async def commands(connections, rooms: set, message: str):
     message = message[1:]
     
@@ -104,8 +105,8 @@ async def ws_server(websocket):
     
     await websocket.send(f'Which room do you want to be placed in (1 - {len(rooms)}): ')
     rooms[await websocket.recv()].add(id)
-    for room in rooms:
-        print(rooms[room])
+    # for room in rooms:
+    #     print(rooms[room])
     
     # if a message has to be sent to a specific client put it in the above block before the await
     
@@ -120,7 +121,7 @@ async def ws_server(websocket):
         print("Connection closed as per request")
     except websockets.exceptions.ConnectionClosedOK:
         print("------------------------------------")
-        print("Socket closed as client disconnected")
+        print(f'Client {id} disconnected')
     
  
 async def main():
