@@ -10,7 +10,10 @@ connections = {} # id: websocket object
 
 rooms = {} # room id : set of websocket ids
 for i in range (10):
-    rooms[i] = set()
+    rooms[str(i+1)] = set()
+
+
+
     
 
 # https://stackoverflow.com/questions/58454190/python-async-waiting-for-stdin-input-while-doing-other-stuff by user: user4815162342
@@ -86,23 +89,7 @@ async def send():
                 await commands(connections, rooms, message)
         except MalformedCommandException as e:
             print(f"{e.message}")
-        
-        # if message.find("/") == -1:
-        #     toSend_dict = {
-        #         "message" : message.strip(),
-        #         "id": "Server"    
-        #     }
-        #     await broadcast(json.dumps(toSend_dict), -1) # -1 to indicate server broadcast to all
-        # else:
-        #     message = message.split("/")
-        #     toSend_dict = {
-        #         "message" : message[1].strip(),
-        #         "id": "Server"
-        #     }
-        #     await connections[message[0].strip()].send(json.dumps(toSend_dict))
-        #     # await broadcast(json.dumps(toSend_dict), message[0].strip()) # use a command in format "id/message" to decide who to send it to
-            
-            
+                    
 
 # Creating WebSocket server
 async def ws_server(websocket):
@@ -113,7 +100,12 @@ async def ws_server(websocket):
     print("------------------------------------")
     
     await websocket.send("Connected to server") # let client know its in
-    await websocket.send(str(id)) # let the client know which id to transmit messages as
+    await websocket.send(str(id)) # let the client know which id to transmit messages as    
+    
+    await websocket.send(f'Which room do you want to be placed in (1 - {len(rooms)}): ')
+    rooms[await websocket.recv()].add(id)
+    for room in rooms:
+        print(rooms[room])
     
     # if a message has to be sent to a specific client put it in the above block before the await
     
