@@ -23,14 +23,15 @@ async def receive(ws):
 async def send(ws, id):
     while True:
         toSend = await ainput("")
-        if toSend.strip() == "exit":
+        exitSystem = False
+        if toSend.strip() == "/exit":
             raise CustomExitException()
         
         send_dict = {
             "message": toSend,
             "id": str(id) # may be best to have this in an object but hey ho
         }
-        await ws.send(json.dumps(send_dict))
+        await ws.send(json.dumps(send_dict))            
 
  
 # The main function that will handle connection and communication
@@ -46,9 +47,12 @@ async def ws_client():
             
             receieved = await ws.recv()
             id = await ws.recv()
-            
+            room_request_message = await ws.recv()
+
             print(f'{receieved} with id: {id}')
             print("------------------------------------")
+            await ws.send(input(room_request_message))
+            
             
             await asyncio.gather(
                 receive(ws),
