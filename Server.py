@@ -181,3 +181,14 @@ async def main():
 # basically __name__ is a special method which changes relative to how the module is run, if directly then it is __main__, else it is set to be the name of the file
 if __name__ == "__main__":
     asyncio.run(main())
+
+
+
+
+#############
+# TO DO
+# 4. oh my god i need to refactor some of these functions into a different file
+# 1. close a specific connection
+# 2. allow clients to change rooms
+# 5. allow users to set a name which is the bit visible to others, not their id
+# 3. clean up outputs (say which message is from where on the server side)
