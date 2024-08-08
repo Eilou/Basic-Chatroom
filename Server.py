@@ -33,14 +33,20 @@ async def receive(websocket):
         
         await broadcast(received_str, received_dict["id"])
         
-        
+# send a message to all in every room
 async def broadcast(message, senderid):
     for connection_id in connections:
         if connection_id != senderid:
             await connections[connection_id].send(message)
-    
-    
 
+# send a message to all in a specific room
+async def room_broadcast(message, senderid, room_id):
+    users_in_room = rooms[room_id]
+    for user_id in users_in_room:
+        await connections[user_id].send(message)
+    
+    
+# holds the commands possible to be ran by the server
 async def commands(connections, rooms: set, message: str):
     message = message[1:]
     
@@ -48,31 +54,37 @@ async def commands(connections, rooms: set, message: str):
     
     command = message[0]
 
-    # if message.find(" ") != -1:
-    #     command = message[0:message.find(" ")]
-    
-    if command == "broadcast": #/broadcast/message Inserted
+    match command:
+        case "broadcast": #/broadcast/message Inserted
         
-        if len(message) != 2: # number of arguments
-            raise MalformedCommandException()
-        
-        toSend_dict = {
-            "message" : message[1],
-            "id": "Server"
-        }
-        await broadcast(json.dumps(toSend_dict), -1) # -1 to indicate server broadcast to all
-    
-    elif command == "individual": # /individual/2/message Inserted
-        if len(message) != 3: 
-            raise MalformedCommandException()
-        
-        target = message[1]
-        
-        toSend_dict = {
-                "message" : message[2],
+            if len(message) != 2: # number of arguments
+                raise MalformedCommandException()
+            
+            toSend_dict = {
+                "message" : message[1],
                 "id": "Server"
             }
-        await connections[target.strip()].send(json.dumps(toSend_dict))
+            await broadcast(json.dumps(toSend_dict), -1) # -1 to indicate server broadcast to all
+    
+        case "individual": # /individual/2/message Inserted
+            if len(message) != 3: 
+                raise MalformedCommandException()
+            
+            target = message[1].strip()
+            try:
+                target_exception = connections[target]
+            except KeyError:
+                raise MalformedCommandException("Target User ID is not connected")
+            
+            toSend_dict = {
+                    "message" : message[2],
+                    "id": "Server"
+                }
+            
+            await connections[target].send(json.dumps(toSend_dict))
+        
+        case _:
+            raise MalformedCommandException()
         
         
     
@@ -104,7 +116,8 @@ async def ws_server(websocket):
     await websocket.send(str(id)) # let the client know which id to transmit messages as    
     
     await websocket.send(f'Which room do you want to be placed in (1 - {len(rooms)}): ')
-    rooms[await websocket.recv()].add(id)
+    room_id = await websocket.recv()
+    rooms[room_id].add(id)
     # for room in rooms:
     #     print(rooms[room])
     
@@ -126,7 +139,9 @@ async def ws_server(websocket):
  
 async def main():
     print("Server starting")
-    async with websockets.serve(ws_server, "0.0.0.0", 8765):
+    # host_ip = "0.0.0.0"
+    host_ip = "localhost"
+    async with websockets.serve(ws_server, host_ip, 8765):
         await asyncio.Future()  # run forever
  
 # basically __name__ is a special method which changes relative to how the module is run, if directly then it is __main__, else it is set to be the name of the file
