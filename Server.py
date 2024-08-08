@@ -13,8 +13,18 @@ for i in range (10):
     rooms[str(i+1)] = set()
 
 
+# think this works but not 100% sure if this is how global stuff works
+def resetConnections():
+    global connections
+    connections = {}
 
-    
+
+def resetRooms():
+    global rooms
+
+    rooms = {}
+    for i in range (10):
+        rooms[str(i+1)] = set()
 
 # https://stackoverflow.com/questions/58454190/python-async-waiting-for-stdin-input-while-doing-other-stuff by user: user4815162342
 async def ainput(string: str) -> str:
@@ -53,13 +63,19 @@ async def room_broadcast(message, room_id, senderid):
     
 # holds the commands possible to be ran by the server
 async def commands(connections, rooms: set, message: str):
-    message = message[1:]
-    message = message.split("/") # example command format: /command/arg1/arg2
-    command = message[0]
+    message = message[1:].strip()
+    command = message
+    if message.find("/") != -1: 
+        message = message.split("/") # example command format: /command/arg1/arg2
+        command = message[0]
 
     match command:
 
-        case "exit": #/exit
+        case "removeAll": #/removeAll
+            for connection_id in connections:
+                resetConnections()
+                resetRooms()
+                await connections[connection_id].close()
             raise CustomExitException()
 
         case "broadcast": #/broadcast/message Inserted
@@ -84,7 +100,7 @@ async def commands(connections, rooms: set, message: str):
                 target_room = rooms[target_room_id] # exists to check that the room does actually exist and raise an error if not
                 toSend_dict = {
                     "message" : message[2],
-                    "id": "Server"
+                    "user_id": "Server"
                 }
                 await room_broadcast(json.dumps(toSend_dict), target_room_id, -1) 
 
@@ -149,7 +165,7 @@ async def ws_server(websocket):
     
     except CustomExitException:
         print("------------------------------------")
-        print("Connection closed as per request")
+        print("Connections closed as per request")
     except websockets.exceptions.ConnectionClosedOK:
         print("------------------------------------")
         print(f'Client {user_id} disconnected')
