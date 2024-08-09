@@ -3,8 +3,10 @@ import asyncio
 import sys
 import json
 
-
 from Exceptions.CustomExitException import CustomExitException
+from Exceptions.MalformedCommandException import MalformedCommandException
+
+# this file should not ocntain any connection manager (as it would need to be updated constantly and this would be lame, plus security)
 
 # https://stackoverflow.com/questions/58454190/python-async-waiting-for-stdin-input-while-doing-other-stuff by user: user4815162342
 async def ainput(string: str) -> str:
@@ -22,17 +24,22 @@ async def receive(ws):
 
 async def send(ws, user_id, room_id):
     while True:
-        toSend = await ainput("")
+        message = await ainput("")
+        command_status = False
 
-        if toSend.strip() == "/exit":
-            raise CustomExitException()
-
+        if message[0] == "/":
+            command_status = True
+            
+        # even if it is a command we still want to let the server know what was said
         send_dict = {
-            "message": toSend,
+            "message": message,
             "user_id": str(user_id), # may be best to have this in an object but hey ho
-            "room_id": room_id
-        }
-        await ws.send(json.dumps(send_dict))            
+            "room_id": room_id,
+            "command_status": command_status
+            }
+        await ws.send(json.dumps(send_dict)) 
+
+                   
 
  
 # The main function that will handle connection and communication

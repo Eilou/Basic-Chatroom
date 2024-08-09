@@ -29,6 +29,9 @@ class ConnectionManager:
             await self.connections[user_id].close()
 
     def removeFromRoom(self, room_id, user_id) -> None:
+        print("room id " + room_id)
+        print("room contents " + str(self.rooms[room_id]))
+        print(user_id)
         self.rooms[room_id].remove(user_id)
 
     # the below 2 could maybe be refactored into other functions
@@ -44,7 +47,9 @@ class ConnectionManager:
         except KeyError:
             raise MalformedCommandException(f'User {user_id} does not exist')
 
-
+    def changeUserRoom(self, room_id_initial, room_id_final, user_id):
+        self.removeFromRoom(room_id_initial, user_id)
+        self.addToRoom(room_id_final, user_id)
 
     ######################################
     ## getters and setters (and resets) ## 

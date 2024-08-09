@@ -17,20 +17,64 @@ async def ainput(string: str) -> str:
             None, lambda s=string: sys.stdout.write(s+' '))
     return await asyncio.get_event_loop().run_in_executor(
             None, sys.stdin.readline)
- 
+
+# creates a formatted dictionary ready for sending
+def createMessageDict(message : str, user_id : str) -> dict:
+    return {
+        "message" : message,
+        "user_id": user_id
+        }
+
+async def clientCommands(websocket : websockets.WebSocketServerProtocol, connectionManager : ConnectionManager, received_dict : dict):
+    message = received_dict["message"][1:].strip()
+    command = message
+    if message.find("/") != -1: 
+        message = message.split("/") # example command format: /command/arg1/arg2
+        command = message[0]
+
+    match command:
+
+        case "changeRoom": #/reset
+            
+            if len(message) != 2: # number of arguments
+                raise MalformedCommandException("/changeRoom requires 2 arguments")
+                # toSend_dict = {
+                #     "message" : "/changeRoom requires 2 arguments",
+                #     "user_id": "Server"
+                # }
+                # await room_broadcast(connectionManager, json.dumps(toSend_dict), target_room_id, -1) 
+            connectionManager.checkRoomExists(message[1])
+            connectionManager.changeUserRoom(received_dict["room_id"], message[1], received_dict["user_id"])
+            await websocket.send(json.dumps(createMessageDict(f'Changed from room {received_dict["room_id"]} to room {message[1]}', "Server")))
+        
+        case _:
+            raise MalformedCommandException("Unknown command")
+            
+
+
 # receive and forward the message on
 async def receive(websocket : websockets.WebSocketServerProtocol, connectionManager : ConnectionManager):
     while True:
         received_str = await websocket.recv()
         received_dict = json.loads(received_str)
         
-        received = f'\t\t\t{received_dict["user_id"]}: {received_dict["message"].strip()}' # format the message 
+        received = f'\t\t\tUser {received_dict["user_id"]} (Room {received_dict["room_id"]}): {received_dict["message"].strip()}' # format the message 
         print(received)
 
         # find out which room the user who send the message was in and then room broadcast it there
         room_to_send = received_dict["room_id"]
 
-        await room_broadcast(connectionManager, received_str, room_to_send, received_dict["user_id"])
+        if received_dict["command_status"]:
+            try:
+                await clientCommands(websocket, connectionManager, received_dict)
+
+            except MalformedCommandException as e:
+
+                # await connectionManager.getUserConnection(target_user_id).send(json.dumps(toSend_dict))
+                await websocket.send(json.dumps(createMessageDict(e.message, "Server")))
+                # await individual(connectionManager, json.dumps(toSend_dict), rece, -1)
+        else:
+            await room_broadcast(connectionManager, received_str, room_to_send, received_dict["user_id"])
         
 # send a message to all in every room
 async def broadcast(connectionManager : ConnectionManager, message : dict, sender_id : str):
@@ -47,7 +91,7 @@ async def room_broadcast(connectionManager : ConnectionManager, message : dict, 
     
     
 # holds the commands possible to be ran by the server
-async def commands(connectionManager : ConnectionManager, message: str):
+async def serverCommands(connectionManager : ConnectionManager, message: str):
     message = message[1:].strip()
     command = message
     if message.find("/") != -1: 
@@ -65,11 +109,12 @@ async def commands(connectionManager : ConnectionManager, message: str):
             if len(message) != 2: # number of arguments
                 raise MalformedCommandException("/broadcast requires 2 arguments")
             
-            toSend_dict = {
-                "message" : message[1],
-                "user_id": "Server"
-            }
-            await broadcast(connectionManager ,json.dumps(toSend_dict), -1) # -1 to indicate server broadcast to all
+            # toSend_dict = createMessageDict(message[1], "Server")
+            # toSend_dict = {
+            #     "message" : message[1],
+            #     "user_id": "Server"
+            # }
+            await broadcast(connectionManager ,json.dumps(createMessageDict(message[1], "Server")), -1) # -1 to indicate server broadcast to all
 
         case "rbroadcast": #/rbroadcast/target_room/message Inserted
         
@@ -79,11 +124,12 @@ async def commands(connectionManager : ConnectionManager, message: str):
             target_room_id = message[1].strip()
             connectionManager.checkRoomExists(target_room_id)
 
-            toSend_dict = {
-                "message" : message[2],
-                "user_id": "Server"
-            }
-            await room_broadcast(connectionManager, json.dumps(toSend_dict), target_room_id, -1) 
+            # toSend_dict = createMessageDict(message[2], "Server")
+            # toSend_dict = {
+            #     "message" : message[2],
+            #     "user_id": "Server"
+            # }
+            await room_broadcast(connectionManager, json.dumps(createMessageDict(message[2], "Server")), target_room_id, -1) 
 
             
     
@@ -94,11 +140,12 @@ async def commands(connectionManager : ConnectionManager, message: str):
             target_user_id = message[1].strip()
             connectionManager.checkUserExists(target_user_id)
 
-            toSend_dict = {
-                "message" : message[2],
-                "user_id": "Server"
-            }
-            await connectionManager.getUserConnection(target_user_id).send(json.dumps(toSend_dict))
+            # toSend_dict = createMessageDict(message[2], "Server")
+            # toSend_dict = {
+            #     "message" : message[2],
+            #     "user_id": "Server"
+            # }
+            await connectionManager.getUserConnection(target_user_id).send(json.dumps(createMessageDict(message[2], "Server")))
 
 
         case _:
@@ -112,7 +159,7 @@ async def send(connectionManager : ConnectionManager):
         # the below section should probably be reworked
         try:
             if message[0] == "/":
-                await commands(connectionManager, message)
+                await serverCommands(connectionManager, message)
 
         except MalformedCommandException as e:
             print(f"{e.message}")
