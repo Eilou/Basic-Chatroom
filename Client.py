@@ -6,7 +6,12 @@ import json
 from Exceptions.CustomExitException import CustomExitException
 from Exceptions.MalformedCommandException import MalformedCommandException
 
-# this file should not ocntain any connection manager (as it would need to be updated constantly and this would be lame, plus security)
+# this file should not contain any connection manager (as it would need to be updated constantly and this would be lame, plus security)
+
+client_details = {
+    "user_id" : "-1",
+    "room_id" : "-1"
+}
 
 # https://stackoverflow.com/questions/58454190/python-async-waiting-for-stdin-input-while-doing-other-stuff by user: user4815162342
 async def ainput(string: str) -> str:

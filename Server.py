@@ -49,8 +49,6 @@ async def clientCommands(websocket : websockets.WebSocketServerProtocol, connect
         
         case _:
             raise MalformedCommandException("Unknown command")
-            
-
 
 # receive and forward the message on
 async def receive(websocket : websockets.WebSocketServerProtocol, connectionManager : ConnectionManager):
@@ -109,12 +107,8 @@ async def serverCommands(connectionManager : ConnectionManager, message: str):
             if len(message) != 2: # number of arguments
                 raise MalformedCommandException("/broadcast requires 2 arguments")
             
-            # toSend_dict = createMessageDict(message[1], "Server")
-            # toSend_dict = {
-            #     "message" : message[1],
-            #     "user_id": "Server"
-            # }
             await broadcast(connectionManager ,json.dumps(createMessageDict(message[1], "Server")), -1) # -1 to indicate server broadcast to all
+
 
         case "rbroadcast": #/rbroadcast/target_room/message Inserted
         
@@ -124,14 +118,8 @@ async def serverCommands(connectionManager : ConnectionManager, message: str):
             target_room_id = message[1].strip()
             connectionManager.checkRoomExists(target_room_id)
 
-            # toSend_dict = createMessageDict(message[2], "Server")
-            # toSend_dict = {
-            #     "message" : message[2],
-            #     "user_id": "Server"
-            # }
             await room_broadcast(connectionManager, json.dumps(createMessageDict(message[2], "Server")), target_room_id, -1) 
 
-            
     
         case "individual": # /individual/2/message Inserted
             if len(message) != 3: 
@@ -140,11 +128,6 @@ async def serverCommands(connectionManager : ConnectionManager, message: str):
             target_user_id = message[1].strip()
             connectionManager.checkUserExists(target_user_id)
 
-            # toSend_dict = createMessageDict(message[2], "Server")
-            # toSend_dict = {
-            #     "message" : message[2],
-            #     "user_id": "Server"
-            # }
             await connectionManager.getUserConnection(target_user_id).send(json.dumps(createMessageDict(message[2], "Server")))
 
 
