@@ -4,7 +4,7 @@ import sys
 import json
 
 
-from CustomExitException import *
+from Exceptions.CustomExitException import CustomExitException
 
 # https://stackoverflow.com/questions/58454190/python-async-waiting-for-stdin-input-while-doing-other-stuff by user: user4815162342
 async def ainput(string: str) -> str:
@@ -50,11 +50,18 @@ async def ws_client():
             receieved = await ws.recv()
             user_id = await ws.recv()
             room_request_message = await ws.recv()
+            room_count = int(await ws.recv())
 
             print(f'{receieved} with id: {user_id}')
             print("------------------------------------")
 
+            
             room_id = input(room_request_message)
+
+            while (int(room_id) < 1 or int(room_id) > room_count):
+                print("Please enter a valid room number")
+                room_id = input(room_request_message)
+
             await ws.send(room_id) # may not need this id, as it is stored on the server but it is good to have access to regardless 
             
             await asyncio.gather(

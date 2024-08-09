@@ -1,8 +1,7 @@
 # this will hold all the different connections and rooms to enable data transfer
-
 import websockets
 
-from MalformedCommandException import *
+from Exceptions.MalformedCommandException import MalformedCommandException
 
 class ConnectionManager:
 
@@ -18,7 +17,7 @@ class ConnectionManager:
         self.rooms[room_id].add(user_id)
 
     # disconnect a particular user
-    async def disconnect(self, user_id) -> None:
+    async def disconnectUser(self, user_id) -> None:
         await self.connections[user_id].close()
 
     async def disconnectAll(self) -> None:

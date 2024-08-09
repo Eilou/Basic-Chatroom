@@ -3,32 +3,13 @@ import asyncio
 import sys
 import json 
 
-from CustomExitException import *
-from MalformedCommandException import *
+from Exceptions.CustomExitException import CustomExitException
+from Exceptions.MalformedCommandException import MalformedCommandException
  
-
 from ConnectionManager import *
 
+
 connectionManager = ConnectionManager(10) 
-# connections = {} # id: websocket object
-
-# rooms = {} # room id : set of websocket ids
-# for i in range (10):
-#     rooms[str(i+1)] = set()
-
-
-# think this works but not 100% sure if this is how global stuff works
-# def resetConnections():
-#     global connections
-#     connections = {}
-
-
-# def resetRooms():
-#     global rooms
-
-#     rooms = {}
-#     for i in range (10):
-#         rooms[str(i+1)] = set()
 
 # https://stackoverflow.com/questions/58454190/python-async-waiting-for-stdin-input-while-doing-other-stuff by user: user4815162342
 async def ainput(string: str) -> str:
@@ -152,6 +133,8 @@ async def ws_server(websocket):
     await websocket.send(str(user_id)) # let the client know which id to transmit messages as    
 
     await websocket.send(f'Which room do you want to be placed in (1 - {len(connectionManager.getRooms())}): ')
+    await websocket.send(str(len(connectionManager.getRooms())))
+
     room_id = await websocket.recv()
     connectionManager.addToRoom(room_id, user_id)
     
@@ -187,8 +170,8 @@ if __name__ == "__main__":
 
 #############
 # TO DO
-# 4. oh my god i need to refactor some of these functions into a different file
-# 1. close a specific connection
+# 4. oh my god i need to refactor some of these functions into a different file /
+# 1. close a specific connection 
 # 2. allow clients to change rooms
 # 5. allow users to set a name which is the bit visible to others, not their id
 # 3. clean up outputs (say which message is from where on the server side)
