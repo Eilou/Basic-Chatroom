@@ -103,11 +103,11 @@ async def serverCommands(connectionManager : ConnectionManager, message: str):
 
     match command:
 
-        case "reset": #/reset
+        case "reset": # /reset
             await connectionManager.resetServer()
             raise CustomExitException()
 
-        case "broadcast": #/broadcast/message Inserted
+        case "broadcast": # /broadcast/message Inserted
         
             if len(message) != 2: # number of arguments
                 raise MalformedCommandException("/broadcast requires 2 arguments")
@@ -115,7 +115,7 @@ async def serverCommands(connectionManager : ConnectionManager, message: str):
             await broadcast(connectionManager ,json.dumps(createMessageDict(message[1], "Server")), -1) # -1 to indicate server broadcast to all
 
 
-        case "rbroadcast": #/rbroadcast/target_room/message Inserted
+        case "rbroadcast": # /rbroadcast/target_room/message Inserted
         
             if len(message) != 3: # number of arguments
                 raise MalformedCommandException("/rbroadcast requires 3 arguments")
@@ -134,6 +134,10 @@ async def serverCommands(connectionManager : ConnectionManager, message: str):
             connectionManager.checkUserExists(target_user_id)
 
             await connectionManager.getUserConnection(target_user_id).send(json.dumps(createMessageDict(message[2], "Server")))
+
+        case "rooms": # /individual/2/message Inserted
+            pass
+
 
 
         case _:

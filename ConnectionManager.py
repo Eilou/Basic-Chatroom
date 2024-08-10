@@ -12,7 +12,7 @@ class ConnectionManager:
                             # users = {"user_1" : {"connection" : "1", "room_id" : "2", "name" : "3"},
                             #          "user_2" : {"connection" : "4", "room_id" : "5", "name" : "6"}}
 
-        self.rooms = {} # {"room_id" : {userObj1, userObj2}}
+        self.rooms = {} # {"room_id" : userObj2}
         self.resetRooms(room_count) # default is 10
     
     def addToRoom(self, room_id, user_id) -> None:
@@ -32,7 +32,7 @@ class ConnectionManager:
             await self.users[user_id].connection.close()
 
     def removeFromRoom(self, room_id, user_id) -> None:
-        self.rooms[room_id].remove(user_id)
+        self.rooms[room_id].remove(self.users[user_id])
         self.users[user_id].room_id = "-1" # not in a room
 
     # the below 2 could maybe be refactored into other functions
