@@ -16,7 +16,7 @@ client_details = {
 # https://stackoverflow.com/questions/58454190/python-async-waiting-for-stdin-input-while-doing-other-stuff by user: user4815162342
 async def ainput(string: str) -> str:
     await asyncio.get_event_loop().run_in_executor(
-            None, lambda s=string: sys.stdout.write(s+' ')) # might explain the space at the start  of each line
+            None, lambda s=string: sys.stdout.write(s+'')) # might explain the space at the start  of each line
     return await asyncio.get_event_loop().run_in_executor(
             None, sys.stdin.readline)
 

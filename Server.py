@@ -15,7 +15,7 @@ connectionManager = ConnectionManager(10)
 # https://stackoverflow.com/questions/58454190/python-async-waiting-for-stdin-input-while-doing-other-stuff by user: user4815162342
 async def ainput(string: str) -> str:
     await asyncio.get_event_loop().run_in_executor(
-            None, lambda s=string: sys.stdout.write(s+' '))
+            None, lambda s=string: sys.stdout.write(s+''))
     return await asyncio.get_event_loop().run_in_executor(
             None, sys.stdin.readline)
 
@@ -135,10 +135,16 @@ async def serverCommands(connectionManager : ConnectionManager, message: str):
 
             await connectionManager.getUserConnection(target_user_id).send(json.dumps(createMessageDict(message[2], "Server")))
 
-        case "rooms": # /individual/2/message Inserted
-            pass
+        case "rooms": # /rooms
+            if type(message) == list and len(message) != 1:
+                raise MalformedCommandException("/rooms requires no additional arguments") # apparently this line is unraechable according to pybalance, well buddy, I reached it. 
 
-
+            output = ""
+            for room_id in connectionManager.getRooms():
+                output += f'Room {room_id}:\n'
+                for user in connectionManager.getRoomMembers(room_id):
+                    output += str(user) + "\n"
+            print(output)
 
         case _:
             raise MalformedCommandException("Unknown command")
@@ -167,10 +173,7 @@ async def ws_server(websocket):
     user = User(user_id, websocket)
     connectionManager.users.update({user_id : user})
 
-    # connectionManager.users.update({user_id : {{"connection": websocket, "room_id" : "", "name" : ""}}})
-    # connectionManager.users[user_id]["connection"] = websocket
-    
-    print(f"Conncection to client {user_id} established")
+    print(f"Connection to client {user_id} established")
     print("------------------------------------")
     
     await websocket.send("Connected to server") # let client know its in
