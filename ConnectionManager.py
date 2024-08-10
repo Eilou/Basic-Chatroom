@@ -8,9 +8,9 @@ class ConnectionManager:
     def __init__(self, room_count : int) -> None:
         self.connections = {} # {"user_id" : websocket_object}
         self.rooms = {} # {"room_id" : {"user_id_1", "user_id_2"}}
-        self.names = {} # {"user_id" : "name"}
+
+        self.users = {} # {"user_id" : {"connection" : websocket_object, "room_id" : "1", "name" : "jimmy"}}
         
-        self.rooms = {}
         self.resetRooms() # default is 10
     
     def addToRoom(self, room_id, user_id) -> None:
@@ -63,12 +63,6 @@ class ConnectionManager:
 
     def getRooms(self) -> dict:
         return self.rooms
-
-    def getName(self, user_id) -> str:
-        return self.names[user_id]
-
-    def setName(self, user_id, name) -> None:
-        self.names[user_id] = name
 
     def resetRooms(self, room_count=10) -> None:
         for i in range (room_count):

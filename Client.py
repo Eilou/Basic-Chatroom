@@ -43,9 +43,6 @@ async def send(ws, user_id, room_id):
             "command_status": command_status
             }
         await ws.send(json.dumps(send_dict)) 
-
-                   
-
  
 # The main function that will handle connection and communication
 # with the server

@@ -205,3 +205,6 @@ if __name__ == "__main__":
 # 2. allow clients to change rooms
 # 5. allow users to set a name which is the bit visible to others, not their id
 # 3. clean up outputs (say which message is from where on the server side)
+
+
+# going to have to refactor how the connection manager holds user info
