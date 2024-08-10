@@ -7,6 +7,7 @@ from Exceptions.CustomExitException import CustomExitException
 from Exceptions.MalformedCommandException import MalformedCommandException
  
 from ConnectionManager import *
+from User import *
 
 
 connectionManager = ConnectionManager(10) 
@@ -25,7 +26,7 @@ def createMessageDict(message : str, user_id : str) -> dict:
         "user_id": user_id
         }
 
-async def clientCommands(websocket : websockets.WebSocketServerProtocol, connectionManager : ConnectionManager, received_dict : dict):
+async def clientCommands(websocket : websockets.WebSocketServerProtocol, connectionManager : ConnectionManager, received_dict : dict, received_user : User):
     message = received_dict["message"][1:].strip()
     command = message
     if message.find("/") != -1: 
@@ -44,8 +45,8 @@ async def clientCommands(websocket : websockets.WebSocketServerProtocol, connect
                 # }
                 # await room_broadcast(connectionManager, json.dumps(toSend_dict), target_room_id, -1) 
             connectionManager.checkRoomExists(message[1])
-            connectionManager.changeUserRoom(received_dict["room_id"], message[1], received_dict["user_id"])
-            await websocket.send(json.dumps(createMessageDict(f'Changed from room {received_dict["room_id"]} to room {message[1]}', "Server")))
+            connectionManager.changeUserRoom(received_user.room_id, message[1], received_dict["user_id"])
+            await websocket.send(json.dumps(createMessageDict(f'Changed from room {received_user.room_id} to room {message[1]}', "Server")))
         
         case _:
             raise MalformedCommandException("Unknown command")
@@ -56,15 +57,18 @@ async def receive(websocket : websockets.WebSocketServerProtocol, connectionMana
         received_str = await websocket.recv()
         received_dict = json.loads(received_str)
         
-        received = f'\t\t\tUser {received_dict["user_id"]} (Room {received_dict["room_id"]}): {received_dict["message"].strip()}' # format the message 
+        # need to lookup user id to find which room they are in, then use this as the room to send to
+        received_user : User = connectionManager.getUsers()[received_dict["user_id"]]
+
+
+        received = f'\t\t\tUser {received_dict["user_id"]} (Room {received_user.room_id}): {received_dict["message"].strip()}' # format the message 
         print(received)
 
-        # find out which room the user who send the message was in and then room broadcast it there
-        room_to_send = received_dict["room_id"]
+        # broadcast the message to the (user who sent it)'s room
 
         if received_dict["command_status"]:
             try:
-                await clientCommands(websocket, connectionManager, received_dict)
+                await clientCommands(websocket, connectionManager, received_dict, received_user)
 
             except MalformedCommandException as e:
 
@@ -72,20 +76,21 @@ async def receive(websocket : websockets.WebSocketServerProtocol, connectionMana
                 await websocket.send(json.dumps(createMessageDict(e.message, "Server")))
                 # await individual(connectionManager, json.dumps(toSend_dict), rece, -1)
         else:
-            await room_broadcast(connectionManager, received_str, room_to_send, received_dict["user_id"])
+            await room_broadcast(connectionManager, received_str, received_user.room_id, received_dict["user_id"])
         
 # send a message to all in every room
 async def broadcast(connectionManager : ConnectionManager, message : dict, sender_id : str):
-    for user_id in connectionManager.getConnections():
+    for user_id in connectionManager.getUsers(): # returns the dict {"user_id" : {userobject}}
         if user_id != sender_id:
             await connectionManager.getUserConnection(user_id).send(message)
 
 # send a message to all in a specific room
 async def room_broadcast(connectionManager : ConnectionManager, message : dict, room_id : str, sender_id : str):
-    users_in_room = connectionManager.getRoomMembers(room_id)
-    for user_id in users_in_room:
-        if user_id != sender_id:
-            await connectionManager.getUserConnection(user_id).send(message)
+    users_in_room = connectionManager.getRoomMembers(room_id) # returns the user objects
+    for user in users_in_room:
+        if user.user_id != sender_id:
+            await user.connection.send(message)
+            # await connectionManager.getUserConnection(user_id).send(message)
     
     
 # holds the commands possible to be ran by the server
@@ -154,7 +159,12 @@ async def ws_server(websocket):
     global connectionManager
 
     user_id = connectionManager.getNextUserID()
-    connectionManager.connections[user_id] = websocket
+
+    user = User(user_id, websocket)
+    connectionManager.users.update({user_id : user})
+
+    # connectionManager.users.update({user_id : {{"connection": websocket, "room_id" : "", "name" : ""}}})
+    # connectionManager.users[user_id]["connection"] = websocket
     
     print(f"Conncection to client {user_id} established")
     print("------------------------------------")

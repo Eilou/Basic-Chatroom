@@ -27,7 +27,7 @@ async def receive(ws):
         received = f'\t\t\t{received_dict["user_id"]}: {received_dict["message"].strip()}'
         print(received)
 
-async def send(ws, user_id, room_id):
+async def send(ws, user_id):
     while True:
         message = await ainput("")
         command_status = False
@@ -39,7 +39,6 @@ async def send(ws, user_id, room_id):
         send_dict = {
             "message": message,
             "user_id": str(user_id), # may be best to have this in an object but hey ho
-            "room_id": room_id,
             "command_status": command_status
             }
         await ws.send(json.dumps(send_dict)) 
@@ -75,7 +74,7 @@ async def ws_client():
             
             await asyncio.gather(
                 receive(ws),
-                send(ws, user_id, room_id)
+                send(ws, user_id)
             )
             
     except CustomExitException:
