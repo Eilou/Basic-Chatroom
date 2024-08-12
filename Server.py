@@ -235,8 +235,8 @@ async def ws_server(websocket):
  
 async def main():
     print("Server starting")
-    # host_ip = "0.0.0.0"
-    host_ip = "localhost"
+    host_ip = "0.0.0.0"
+    # host_ip = "localhost"
     async with websockets.serve(ws_server, host_ip, 8765):
         await asyncio.Future()  # run forever
  
@@ -248,12 +248,12 @@ if __name__ == "__main__":
 
 
 #############
-# TO DO
+# TODO
 # 4. oh my god i need to refactor some of these functions into a different file /
-# 1. close a specific connection 
-# 2. allow clients to change rooms
+# 1. close a specific connection /
+# 2. allow clients to change rooms /
 # 5. allow users to set a name which is the bit visible to others, not their id
-# 3. clean up outputs (say which message is from where on the server side)
+# 3. clean up outputs (say which message is from where on the server side) /
 
 
-# going to have to refactor how the connection manager holds user info
+# going to have to refactor how the connection manager holds user info /

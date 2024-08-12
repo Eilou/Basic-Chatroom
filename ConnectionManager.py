@@ -24,8 +24,8 @@ class ConnectionManager:
         await self.getUserConnection(user_id).close()
 
     async def disconnectRoom(self, room_id) -> None:
-        for user_id in self.rooms[room_id]:
-            await self.getUserConnection(user_id).close()
+        for user in self.rooms[room_id]:
+            await user.connection.close()
 
     def removeFromRoom(self, room_id, user_id) -> None:
         self.rooms[room_id].remove(self.users[user_id]) # rooms holds the user object
@@ -80,7 +80,7 @@ class ConnectionManager:
     
     async def resetServer(self) -> None:
         self.resetRooms()
-        self.resetUsers()
+        await self.resetUsers()
 
     def getRoomMembers(self, room_id) -> set:
         return self.rooms[room_id]
