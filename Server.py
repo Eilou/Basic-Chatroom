@@ -35,15 +35,11 @@ async def clientCommands(websocket : websockets.WebSocketServerProtocol, connect
 
     match command:
 
-        case "changeRoom": #/reset
+        case "changeRoom": # /changeRoom/<room>
             
             if len(message) != 2: # number of arguments
                 raise MalformedCommandException("/changeRoom requires 2 arguments")
-                # toSend_dict = {
-                #     "message" : "/changeRoom requires 2 arguments",
-                #     "user_id": "Server"
-                # }
-                # await room_broadcast(connectionManager, json.dumps(toSend_dict), target_room_id, -1) 
+
             connectionManager.checkRoomExists(message[1])
             connectionManager.changeUserRoom(received_user.room_id, message[1], received_dict["user_id"])
             await websocket.send(json.dumps(createMessageDict(f'Changed from room {received_user.room_id} to room {message[1]}', "Server")))
