@@ -14,6 +14,8 @@ class ConnectionManager:
 
         self.rooms = {} # {"room_id" : userObj2}
         self.resetRooms(room_count) # default is 10
+        
+        self.prev_user_ids = list()
     
     def addToRoom(self, room_id, user_id) -> None:
         self.rooms[room_id].add(self.users[user_id])
@@ -21,10 +23,12 @@ class ConnectionManager:
 
     # disconnect a particular user
     async def disconnectUser(self, user_id) -> None:
+        self.prev_user_ids.append(user_id)
         await self.getUserConnection(user_id).close()
 
     async def disconnectRoom(self, room_id) -> None:
-        for user in self.rooms[room_id]:
+        users_to_disconnect = list(self.rooms[room_id]) # makes a copy of the items to iterate over so it doesn't adjust the end loop size
+        for user in users_to_disconnect:
             await user.connection.close()
 
     def removeFromRoom(self, room_id, user_id) -> None:
@@ -86,5 +90,10 @@ class ConnectionManager:
         return self.rooms[room_id]
     
     def getNextUserID(self) -> str:
-        return str(len(self.users)+1)
+        if len(self.prev_user_ids) == 0:
+            return str(len(self.users)+1)
+        
+        to_assign = self.prev_user_ids[0]
+        self.prev_user_ids.pop(0)
+        return to_assign
     

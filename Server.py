@@ -105,7 +105,7 @@ async def serverCommands(connectionManager : ConnectionManager, message: str):
                 raise MalformedCommandException("/reset requires no additional arguments") # apparently this line is unreachable according to pybalance, well buddy, I reached it. 
 
             await connectionManager.resetServer()
-            raise CustomExitException()
+            # raise CustomExitException()
 
         case "broadcast": # /broadcast/message Inserted
         
@@ -204,7 +204,7 @@ async def ws_server(websocket):
     user = User(user_id, websocket)
     connectionManager.users.update({user_id : user})
 
-    print(f"Connection to client {user_id} established")
+    print(f"Connection to Client {user_id} established")
     print("------------------------------------")
     
     await websocket.send("Connected to server") # let client know its in
@@ -249,6 +249,7 @@ if __name__ == "__main__":
 
 #############
 # TODO
+#############
 # 4. oh my god i need to refactor some of these functions into a different file /
 # 1. close a specific connection /
 # 2. allow clients to change rooms /
