@@ -79,3 +79,6 @@ Run the following when the server is connected to at least one client
 
 `/changeRoom/<room>`
 - Moves the user from one room to another
+
+`/changeName/<name>`
+- Changes or sets a users name

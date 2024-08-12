@@ -76,15 +76,13 @@ class ConnectionManager:
     def resetRooms(self, room_count=10) -> None:
         for i in range (room_count):
             self.rooms[str(i+1)] = set()
-
-    async def resetUsers(self) -> None:
-        for user_id in self.users:
-            await self.getUserConnection(user_id).close()
-        self.users = {}
     
     async def resetServer(self) -> None:
-        self.resetRooms()
-        await self.resetUsers()
+        
+        # disconnecting each room, WHICH WILL THEN AUTO CLEAN UP AFTER EACH USER so no error handling required
+        
+        for room_id in self.rooms:
+            await self.disconnectRoom(room_id)
 
     def getRoomMembers(self, room_id) -> set:
         return self.rooms[room_id]
@@ -97,3 +95,8 @@ class ConnectionManager:
         self.prev_user_ids.pop(0)
         return to_assign
     
+    def getUserName(self, user_id) -> str:
+        return self.users[user_id].name
+    
+    def setUserName(self, user_id: str, name: str) -> None:
+        self.users[user_id].name = name

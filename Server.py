@@ -44,6 +44,13 @@ async def clientCommands(websocket : websockets.WebSocketServerProtocol, connect
             connectionManager.changeUserRoom(received_user.room_id, message[1], received_dict["user_id"])
             await websocket.send(json.dumps(createMessageDict(f'Changed from room {received_user.room_id} to room {message[1]}', "Server")))
         
+        case "changeName":
+            
+            if len(message) != 2:
+                raise MalformedCommandException("/changeName requires 2 arguments")
+            
+            connectionManager.setUserName(received_dict["user_id"], message[1].strip())
+        
         case _:
             raise MalformedCommandException("Unknown command")
 
@@ -55,7 +62,6 @@ async def receive(websocket : websockets.WebSocketServerProtocol, connectionMana
         
         # need to lookup user id to find which room they are in, then use this as the room to send to
         received_user : User = connectionManager.getUsers()[received_dict["user_id"]]
-
 
         received = f'\t\t\tUser {received_dict["user_id"]} (Room {received_user.room_id}): {received_dict["message"].strip()}' # format the message 
         print(received)
@@ -85,8 +91,11 @@ async def room_broadcast(connectionManager : ConnectionManager, message : dict, 
     users_in_room = connectionManager.getRoomMembers(room_id) # returns the user objects
     for user in users_in_room:
         if user.user_id != sender_id:
+            
+            # this will be checked with the server_id being -1 causing an error
+            if sender_id != "Server" and connectionManager.getUserName(sender_id) != "": # treat the server differently
+                message = json.dumps(json.loads(message).update({"name" : connectionManager.getUserName(sender_id)}))
             await user.connection.send(message)
-            # await connectionManager.getUserConnection(user_id).send(message)
     
     
 # holds the commands possible to be ran by the server
@@ -112,7 +121,7 @@ async def serverCommands(connectionManager : ConnectionManager, message: str):
             if len(message) != 2: # number of arguments
                 raise MalformedCommandException("/broadcast requires 2 arguments")
             
-            await broadcast(connectionManager ,json.dumps(createMessageDict(message[1], "Server")), -1) # -1 to indicate server broadcast to all
+            await broadcast(connectionManager ,json.dumps(createMessageDict(message[1], "Server")), "Server") # server broadcast to all
 
 
         case "rbroadcast": # /rbroadcast/target_room/message Inserted
@@ -123,7 +132,7 @@ async def serverCommands(connectionManager : ConnectionManager, message: str):
             target_room_id = message[1].strip()
             connectionManager.checkRoomExists(target_room_id)
 
-            await room_broadcast(connectionManager, json.dumps(createMessageDict(message[2], "Server")), target_room_id, -1) 
+            await room_broadcast(connectionManager, json.dumps(createMessageDict(message[2], "Server")), target_room_id, "Server") 
 
     
         case "individual": # /individual/2/message Inserted
