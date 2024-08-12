@@ -29,7 +29,10 @@ class ConnectionManager:
             await self.getUserConnection(user_id).close()
 
     def removeFromRoom(self, room_id, user_id) -> None:
-        self.rooms[room_id].remove(self.users[user_id])
+        print(f'user_id {user_id}')
+        print(f'room_id {room_id}')
+        print(f'user object {self.users[user_id]}')
+        self.rooms[room_id].remove(self.users[user_id]) # rooms holds the user object
         self.users[user_id].room_id = "-1" # not in a room
 
     # the below 2 could maybe be refactored into other functions
@@ -50,6 +53,7 @@ class ConnectionManager:
         self.addToRoom(room_id_final, user_id)
 
     def cleanUpUser(self, user_id): # TODO this may result in when a new user is added it could potentially be given the same id as an existing one, need to add a log of all removed then go through this before assigning a new id based on the length of the users
+        
         room_id = self.getUserRoom(user_id)
         self.removeFromRoom(room_id, user_id)
         self.users.pop(user_id)

@@ -162,7 +162,7 @@ async def serverCommands(connectionManager : ConnectionManager, message: str):
             
             target_user_id = message[1].strip()
             connectionManager.checkUserExists(target_user_id)
-            connectionManager.disconnectUser(target_user_id)
+            await connectionManager.disconnectUser(target_user_id)
 
         case "dcRoom": # /dcRoom/<room_id>
             if len(message) != 2:
@@ -170,7 +170,7 @@ async def serverCommands(connectionManager : ConnectionManager, message: str):
             
             target_room_id = message[1].strip()
             connectionManager.checkRoomExists(target_room_id)
-            connectionManager.disconnectRoom(target_room_id)
+            await connectionManager.disconnectRoom(target_room_id)
 
         case _:
             raise MalformedCommandException("Unknown command")
