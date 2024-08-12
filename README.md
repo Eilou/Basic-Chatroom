@@ -38,6 +38,12 @@ Run the following when the server is connected to at least one client
 `/rooms`
 - Outputs a list of rooms and the clients connected in each
 
+`/dcUser/<user>`
+- Disconnects a specific user/client from the server
+
+`/dcRoom/<room>`
+- Disconnects all users within a room from the server
+
 ### Client Side
 
 `/changeRoom/<room>`

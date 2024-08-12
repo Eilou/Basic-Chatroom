@@ -21,15 +21,12 @@ class ConnectionManager:
 
     # disconnect a particular user
     async def disconnectUser(self, user_id) -> None:
-        await self.users[user_id].collection.close()
-
-    async def disconnectAll(self) -> None:
-        for user_id in self.users:
-            await self.users[user_id].connection.close()
+        await self.getUserConnection(user_id).close()
+        self.cleanUpUser(user_id)
 
     async def disconnectRoom(self, room_id) -> None:
         for user_id in self.rooms[room_id]:
-            await self.users[user_id].connection.close()
+            await self.getUserConnection(user_id).close()
 
     def removeFromRoom(self, room_id, user_id) -> None:
         self.rooms[room_id].remove(self.users[user_id])
@@ -44,13 +41,18 @@ class ConnectionManager:
 
     def checkUserExists(self, user_id):
         try:
-            target_connection = self.users[user_id].connection
+            target_connection = self.getUserConnection(user_id)
         except KeyError:
             raise MalformedCommandException(f'User {user_id} does not exist')
 
     def changeUserRoom(self, room_id_initial, room_id_final, user_id):
         self.removeFromRoom(room_id_initial, user_id)
         self.addToRoom(room_id_final, user_id)
+
+    def cleanUpUser(self, user_id): # TODO this may result in when a new user is added it could potentially be given the same id as an existing one, need to add a log of all removed then go through this before assigning a new id based on the length of the users
+        room_id = self.getUserRoom(user_id)
+        self.removeFromRoom(room_id, user_id)
+        self.users.pop(user_id)
 
     ######################################
     ## getters and setters (and resets) ## 
@@ -61,6 +63,9 @@ class ConnectionManager:
 
     def getUserConnection(self, user_id) -> websockets.WebSocketServerProtocol:
         return self.users[user_id].connection
+    
+    def getUserRoom(self, user_id) -> str:
+        return self.users[user_id].room_id
     
     def getRooms(self) -> dict:
         return self.rooms

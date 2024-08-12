@@ -100,6 +100,10 @@ async def serverCommands(connectionManager : ConnectionManager, message: str):
     match command:
 
         case "reset": # /reset
+
+            if type(message) == list and len(message) != 1:
+                raise MalformedCommandException("/reset requires no additional arguments") # apparently this line is unreachable according to pybalance, well buddy, I reached it. 
+
             await connectionManager.resetServer()
             raise CustomExitException()
 
@@ -142,6 +146,32 @@ async def serverCommands(connectionManager : ConnectionManager, message: str):
                     output += str(user) + "\n"
             print(output)
 
+        case "users": # /users
+            if type(message) == list and len(message) != 1:
+                raise MalformedCommandException("/users requires no additional arguments") # apparently this line is unraechable according to pybalance, well buddy, I reached it. 
+
+            output = ""
+            for user_id in connectionManager.getUsers():
+                output += f'User {user_id}: {str(connectionManager.users[user_id])}'
+                output += "\n"
+            print(output)
+
+        case "dcUser": # /dcUser/<user_id>
+            if len(message) != 2:
+                raise MalformedCommandException("/dcUser requires 2 arguments")
+            
+            target_user_id = message[1].strip()
+            connectionManager.checkUserExists(target_user_id)
+            connectionManager.disconnectUser(target_user_id)
+
+        case "dcRoom": # /dcRoom/<room_id>
+            if len(message) != 2:
+                raise MalformedCommandException("/dcUser requires 2 arguments")
+            
+            target_room_id = message[1].strip()
+            connectionManager.checkRoomExists(target_room_id)
+            connectionManager.disconnectRoom(target_room_id)
+
         case _:
             raise MalformedCommandException("Unknown command")
 
@@ -164,6 +194,8 @@ async def ws_server(websocket):
 
     global connectionManager
 
+    # specific to this instance of ws_sever
+    # this value will be differnet for each client connected
     user_id = connectionManager.getNextUserID()
 
     user = User(user_id, websocket)
@@ -192,9 +224,10 @@ async def ws_server(websocket):
     except CustomExitException:
         print("------------------------------------")
         print("Connections closed as per request")
-    except websockets.exceptions.ConnectionClosedOK:
+    except (websockets.exceptions.ConnectionClosedOK, websockets.exceptions.ConnectionClosedError):
         print("------------------------------------")
         print(f'Client {user_id} disconnected')
+        connectionManager.cleanUpUser(user_id)
     
  
 async def main():
