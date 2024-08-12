@@ -150,11 +150,14 @@ async def serverCommands(connectionManager : ConnectionManager, message: str):
             if type(message) == list and len(message) != 1:
                 raise MalformedCommandException("/users requires no additional arguments") # apparently this line is unraechable according to pybalance, well buddy, I reached it. 
 
-            output = ""
-            for user_id in connectionManager.getUsers():
-                output += f'User {user_id}: {str(connectionManager.users[user_id])}'
-                output += "\n"
-            print(output)
+            if len(connectionManager.getUsers()) <= 0:
+                print("No users currently connected")
+            else:
+                output = ""
+                for user_id in connectionManager.getUsers():
+                    output += f'User {user_id}: {str(connectionManager.users[user_id])}'
+                    output += "\n"
+                print(output)
 
         case "dcUser": # /dcUser/<user_id>
             if len(message) != 2:
