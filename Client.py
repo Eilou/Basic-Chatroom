@@ -23,10 +23,11 @@ async def ainput(string: str) -> str:
 async def receive(ws):
     while True:
         received_str = await ws.recv()
+        print(received_str)
         received_dict : dict = json.loads(received_str)
         
         name_prequel = ""
-        if "name" in received_dict.keys() :
+        if "name" in received_dict:
             name_prequel = f'{received_dict["name"]} '
             
         received = f'\t\t\t{name_prequel}({received_dict["user_id"]}) : {received_dict["message"].strip()}'

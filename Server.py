@@ -68,7 +68,6 @@ async def receive(websocket : websockets.WebSocketServerProtocol, connectionMana
         print(received)
 
         # broadcast the message to the (user who sent it)'s room
-
         if received_dict["command_status"]:
             try:
                 await clientCommands(websocket, connectionManager, received_dict, received_user)
@@ -86,7 +85,7 @@ async def broadcast(connectionManager : ConnectionManager, message : dict, sende
             await connectionManager.getUserConnection(user_id).send(message)
 
 # send a message to all in a specific room
-async def room_broadcast(connectionManager : ConnectionManager, message : dict, room_id : str, sender_id : str):
+async def room_broadcast(connectionManager : ConnectionManager, message : str, room_id : str, sender_id : str):
     users_in_room = connectionManager.getRoomMembers(room_id) # returns the user objects
     for user in users_in_room:
         if user.user_id != sender_id:
@@ -94,7 +93,10 @@ async def room_broadcast(connectionManager : ConnectionManager, message : dict, 
             # if sender is server or sender has no username, then don't bother adding the name
             # ¬(u=server V noName) = ¬u=Sender n ¬noName
             if sender_id != "Server" and connectionManager.getUserName(sender_id) != "":
-                message = json.dumps(json.loads(message).update({"name" : connectionManager.getUserName(sender_id)}))
+                message = json.loads(message)
+                message.update({"name" : connectionManager.getUserName(sender_id)})
+                message = json.dumps(message)
+
             await user.connection.send(message)
     
     
