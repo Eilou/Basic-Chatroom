@@ -23,7 +23,6 @@ async def ainput(string: str) -> str:
 async def receive(ws):
     while True:
         received_str = await ws.recv()
-        print(received_str)
         received_dict : dict = json.loads(received_str)
         
         name_prequel = ""
