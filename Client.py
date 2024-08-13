@@ -23,13 +23,13 @@ async def ainput(string: str) -> str:
 async def receive(ws):
     while True:
         received_str = await ws.recv()
-        received_dict = json.loads(received_str)
+        received_dict : dict = json.loads(received_str)
         
         name_prequel = ""
-        if "name" in received_dict:
+        if "name" in received_dict.keys() :
             name_prequel = f'{received_dict["name"]} '
             
-        received = f'\t\t\t{name_prequel} ({received_dict["user_id"]}): {received_dict["message"].strip()}'
+        received = f'\t\t\t{name_prequel}({received_dict["user_id"]}) : {received_dict["message"].strip()}'
         print(received)
 
 async def send(ws, user_id):
@@ -54,7 +54,6 @@ async def ws_client():
 
     try:
         
-        # url = "ws://192.168.40.164:8765" # using my private ip as a temporary gig
         url = "ws://localhost:8765"
 
         # Connect to the server

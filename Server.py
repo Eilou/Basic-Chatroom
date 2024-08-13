@@ -44,12 +44,13 @@ async def clientCommands(websocket : websockets.WebSocketServerProtocol, connect
             connectionManager.changeUserRoom(received_user.room_id, message[1], received_dict["user_id"])
             await websocket.send(json.dumps(createMessageDict(f'Changed from room {received_user.room_id} to room {message[1]}', "Server")))
         
-        case "changeName":
+        case "changeName": # /changeName/<name>
             
             if len(message) != 2:
                 raise MalformedCommandException("/changeName requires 2 arguments")
             
             connectionManager.setUserName(received_dict["user_id"], message[1].strip())
+            await websocket.send(json.dumps(createMessageDict(f'Changed name to {message[1].strip()}', "Server")))
         
         case _:
             raise MalformedCommandException("Unknown command")
@@ -73,10 +74,8 @@ async def receive(websocket : websockets.WebSocketServerProtocol, connectionMana
                 await clientCommands(websocket, connectionManager, received_dict, received_user)
 
             except MalformedCommandException as e:
-
-                # await connectionManager.getUserConnection(target_user_id).send(json.dumps(toSend_dict))
                 await websocket.send(json.dumps(createMessageDict(e.message, "Server")))
-                # await individual(connectionManager, json.dumps(toSend_dict), rece, -1)
+                
         else:
             await room_broadcast(connectionManager, received_str, received_user.room_id, received_dict["user_id"])
         
@@ -92,8 +91,9 @@ async def room_broadcast(connectionManager : ConnectionManager, message : dict, 
     for user in users_in_room:
         if user.user_id != sender_id:
             
-            # this will be checked with the server_id being -1 causing an error
-            if sender_id != "Server" and connectionManager.getUserName(sender_id) != "": # treat the server differently
+            # if sender is server or sender has no username, then don't bother adding the name
+            # ¬(u=server V noName) = ¬u=Sender n ¬noName
+            if sender_id != "Server" and connectionManager.getUserName(sender_id) != "":
                 message = json.dumps(json.loads(message).update({"name" : connectionManager.getUserName(sender_id)}))
             await user.connection.send(message)
     
